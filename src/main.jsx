@@ -6,7 +6,7 @@ import { BrowserRouter } from 'react-router'
 import client from './lib/apollo-client';
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import Navbar from './components/Navbar.jsx'
-import "./App.css";
+import "./index.css";
 
 
 createRoot(document.getElementById('root')).render(

@@ -2,8 +2,8 @@ import { gql, useMutation } from "@apollo/client";
 import { GET_TICKETS } from "@/graphql/queries/getTickets";
 
 const CREATE_TICKET = gql`
-  mutation CreateTicket($title: String!, $description: String!, $category: String!, $priority: String!) {
-    createTicket(input: { title: $title, description: $description, category: $category, priority: $priority }) {
+  mutation CreateTicket($title: String!, $description: String!, $category: String!, $priority: String!, $attachments: [Upload!]) {
+    createTicket(input: { title: $title, description: $description, category: $category, priority: $priority, attachments: $attachments }) {
       ticket {
         id
         title
@@ -37,6 +37,14 @@ export const useCreateTicket = (callbackAction) => {
   return {
     loading,
     error,
-    createTicket: (formData) => createTicket({ variables: { ...formData } })
+    createTicket: (formData) => {
+      const variables = { ...formData };
+      if(!variables.attachments || variables.attachments.length === 0) {
+        delete variables.attachments;
+      }
+
+      console.log(variables, 'eeee');
+      return createTicket({ variables });
+    }
   };
 };

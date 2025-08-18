@@ -23,6 +23,14 @@ export const GET_TICKETS = gql`
         firstName
         lastName
       }
+      attachments {
+        id
+        filename
+        byteSize
+        url
+        createdAt
+        contentType
+      }
     }
   }
 `;

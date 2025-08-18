@@ -1,8 +1,9 @@
 import { NumberChip, StatusChip, PriorityChip } from "@/components/Chip";
 import { formatDistanceToNow, parseISO } from "date-fns";
+import { Calendar, Paperclip, ChartColumnStacked, UserRoundPen } from "lucide-react";
 
 const TicketCard = (ticket) => {
-  const { title, description, number, status, priority, createdAt, category, assignedTo } = ticket.ticket;
+  const { title, description, number, status, priority, createdAt, category, assignedTo, attachments } = ticket.ticket;
   return (
     <div className="border border-gray-200 p-4 rounded shadow hover:shadow-lg">
       <div className="flex space-x-2 mb-4">
@@ -16,15 +17,22 @@ const TicketCard = (ticket) => {
       </p>
       <div className="flex items-center justify-between mt-4">
         <div className="flex space-x-3">
-          <p className="text-xs text-gray-400">
-            {formatDistanceToNow(parseISO(createdAt), { addSuffix: true })}
+          <p className="text-xs text-gray-500 flex items-center space-x-1">
+            <Calendar size={14}/>
+            <span>{formatDistanceToNow(parseISO(createdAt), { addSuffix: true })}</span>
           </p>
-          <p className="text-xs text-gray-400">1</p>
-          <p className="text-xs text-gray-400">Category: {category}</p>
+          <p className="text-xs text-gray-500 flex items-center space-x-1">
+            <Paperclip size={14} />
+            <span>{attachments.length}</span>
+          </p>
+          <p className="text-xs text-gray-500 flex items-center space-x-1">
+            <ChartColumnStacked size={14} />
+            <span>Category: {category}</span>
+          </p>
         </div>
 
         {assignedTo && (
-          <span className="text-xs text-gray-400">Assigned to: {assignedTo.firstName} {assignedTo.lastName}</span>
+          <span className="text-xs text-gray-500">Assigned to: <UserRoundPen size={15} /> {assignedTo.firstName} {assignedTo.lastName}</span>
         )}
       </div>
     </div>

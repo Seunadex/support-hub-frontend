@@ -2,7 +2,7 @@ import { humanize } from "@/utils/function"
 
 const Chip = ({ label, style }) => {
   return (
-    <div className={`text-xs font-semibold rounded-2xl px-3 flex items-center ${style}`}>
+    <div className={`text-xs font-semibold rounded-2xl px-3 py-0.5 flex items-center ${style}`}>
       {label}
     </div>
   );

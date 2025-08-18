@@ -43,7 +43,6 @@ export const useCreateTicket = (callbackAction) => {
         delete variables.attachments;
       }
 
-      console.log(variables, 'eeee');
       return createTicket({ variables });
     }
   };

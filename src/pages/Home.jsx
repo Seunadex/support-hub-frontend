@@ -1,12 +1,17 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import Modal from "@/components/Modal";
 import Form from "@/components/Form";
 import TicketCard from "@/components/TicketCard";
 import { useTickets } from "@/graphql/queries/getTickets"
 import Cookies from "js-cookie"
 import { useCreateTicket } from "@/graphql/mutations/createTicket";
+import { AuthContext } from "@/contexts/AuthContext"
 
 const Home = () => {
+  const context = useContext(AuthContext);
+  const { user } = context;
+  const isAgent = user?.role === "agent";
+  const isCustomer = user?.role === "customer";
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
@@ -33,13 +38,15 @@ const Home = () => {
             Track and manage your support requests in one place.
           </p>
         </div>
-        <button
-          type="button"
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-          onClick={openModal}
-        >
-          + New Ticket
-        </button>
+        {isCustomer && (
+          <button
+            type="button"
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+            onClick={openModal}
+          >
+            + New Ticket
+          </button>
+        )}
         <Modal
           isOpen={isModalOpen}
           onClose={closeModal}

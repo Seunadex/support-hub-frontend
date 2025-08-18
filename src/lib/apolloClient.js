@@ -9,7 +9,6 @@ const httpLink = createUploadLink({
 
 const authLink = setContext((_, { headers }) => {
   const token = Cookies.get("auth_token");
-  console.log(token, 'token');
 
   return {
     headers: {

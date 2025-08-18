@@ -19,6 +19,11 @@ const SIGN_IN = gql`
 export const useLoginMutation = (params, callbackAction) => {
   const [login, { loading, error }] = useMutation(SIGN_IN, {
     variables: params,
+    context: {
+      headers: {
+        "x-operation-name": "Login",
+      },
+    },
     onCompleted: (data) => {
       callbackAction(data);
     },

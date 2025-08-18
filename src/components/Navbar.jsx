@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { AuthContext } from '../contexts/AuthContext';
+import { AuthContext } from '@/contexts/AuthContext';
 import { NavLink, useNavigate } from "react-router";
 
 
@@ -20,9 +20,9 @@ const Navbar = () => {
       </div>
       <div>
         {isAuthenticated ? (
-          <button onClick={handleLogout} className='text-white'>Logout</button>
+          <button onClick={handleLogout} className='text-gray-600 border border-gray-300 rounded-md px-4 py-1 hover:cursor-pointer'>Logout</button>
         ) : (
-          <NavLink to="/login" className='text-white'>Login</NavLink>
+          <NavLink to="/login" className='text-white hover:cursor-pointer'>Login</NavLink>
         )}
       </div>
     </nav>

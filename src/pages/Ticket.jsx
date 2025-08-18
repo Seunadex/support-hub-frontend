@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useLocation, NavLink } from "react-router";
+import { useParams, NavLink } from "react-router";
 import { useGetTicket } from "@/graphql/queries/getTicket";
 import { NumberChip, StatusChip, PriorityChip } from "@/components/Chip";
 import {
@@ -11,24 +11,22 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow, parseISO, format } from "date-fns";
 import { humanize } from "@/utils/function";
+import { useAssignTicket } from "@/graphql/mutations/assignTicket";
 
 const Ticket = () => {
   const { id } = useParams();
   const { loading, ticket } = useGetTicket(id);
+  const { assignTicket, loading: assigning } = useAssignTicket(id, (updatedTicket) => {
+    // Handle successful assignment
+    console.log(updatedTicket);
+  });
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
   const agentCanComment = ticket?.assignedTo?.id === currentUser?.id;
   const customerCanComment = ticket?.agentHasReplied;
 
-  console.log(ticket)
-  console.log(currentUser?.id, 'shadow')
-
-  console.log(agentCanComment, 'one');
-  console.log(customerCanComment, 'two');
-
   const [comment, setComment] = useState("");
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission
   };
 
   if (loading) return <p>Loading...</p>;
@@ -154,21 +152,27 @@ const Ticket = () => {
             )}
           </div>
           <div className="bg-white border border-gray-300 p-4 rounded-lg mt-5">
-            <p className="font-medium mb-4">Assigned Agent</p>
+            <p className="font-semibold mb-4">Assigned Agent</p>
             {ticket.assignedTo ? (
               <div className="flex items-center space-x-2">
-                <HatGlasses size={30} />
+                <HatGlasses size={35} />
                 <div>
-                  <p className="text-gray-700">
+                  <p className="text-gray-700 font-medium">
                     {ticket.assignedTo.firstName} {ticket.assignedTo.lastName}
                   </p>
-                  <p className="text-gray-700">{ticket.assignedTo.email}</p>
+                  <p className="text-gray-500 text-sm">{ticket.assignedTo.email}</p>
                 </div>
               </div>
             ) : (
-              <button className="border border-gray-500 px-4 py-1 rounded-md text-sm whitespace-nowrap">
-                Assign to Me
-              </button>
+              currentUser?.role === "agent" && (
+                <button
+                  className="border border-gray-500 px-4 py-1 rounded-md text-sm whitespace-nowrap cursor-pointer"
+                  onClick={() => assignTicket()}
+                  disabled={assigning}
+                >
+                  {assigning ? "Assigning..." : "Assign to Me"}
+                </button>
+              )
             )}
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { gql, useQuery } from "@apollo/client";
 
-const GET_TICKET = gql`
+export const GET_TICKET = gql`
   query GetTicket($id: ID!) {
     ticket(id: $id) {
       id
@@ -22,6 +22,7 @@ const GET_TICKET = gql`
         id
         firstName
         lastName
+        email
       }
       firstResponseAt
       attachments {

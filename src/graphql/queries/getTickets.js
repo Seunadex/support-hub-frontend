@@ -25,17 +25,12 @@ export const GET_TICKETS = gql`
       }
       attachments {
         id
-        filename
-        byteSize
-        url
-        createdAt
-        contentType
       }
     }
   }
 `;
 
-export const useTickets = () => {
+export const useGetTickets = () => {
   const { data, loading, error } = useQuery(GET_TICKETS);
 
   if (loading) return { loading, tickets: [], error };

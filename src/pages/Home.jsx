@@ -2,7 +2,7 @@ import { useState, useContext } from "react";
 import Modal from "@/components/Modal";
 import Form from "@/components/Form";
 import TicketCard from "@/components/TicketCard";
-import { useTickets } from "@/graphql/queries/getTickets"
+import { useGetTickets } from "@/graphql/queries/getTickets"
 import Cookies from "js-cookie"
 import { useCreateTicket } from "@/graphql/mutations/createTicket";
 import { AuthContext } from "@/contexts/AuthContext"
@@ -10,7 +10,7 @@ import { AuthContext } from "@/contexts/AuthContext"
 const Home = () => {
   const context = useContext(AuthContext);
   const { user } = context;
-  const isAgent = user?.role === "agent";
+  // const isAgent = user?.role === "agent";
   const isCustomer = user?.role === "customer";
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -26,7 +26,7 @@ const Home = () => {
     closeModal();
   };
 
-  const { tickets, loading: ticketsLoading } = useTickets();
+  const { tickets, loading: ticketsLoading } = useGetTickets();
   const { createTicket, loading, error } = useCreateTicket(createTicketCallback);
 
   return (
@@ -66,7 +66,7 @@ const Home = () => {
           <p>Loading...</p>
         ) : (
           tickets.map(ticket => (
-            <TicketCard key={ticket.id} ticket={ticket} />
+            <TicketCard key={ticket.id} ticket={ticket}/>
           ))
         )}
       </div>

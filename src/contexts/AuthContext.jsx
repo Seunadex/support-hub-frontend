@@ -8,7 +8,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("current_user");
+    const savedUser = localStorage.getItem("currentUser");
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       if (data?.getCurrentUser) {
         setUser(data.getCurrentUser);
-        localStorage.setItem("current_user", JSON.stringify(data.getCurrentUser));
+        localStorage.setItem("currentUser", JSON.stringify(data.getCurrentUser));
         setIsAuthenticated(true);
       } else if (error) {
         // Token might be invalid, clear it
@@ -35,12 +35,12 @@ export const AuthProvider = ({ children }) => {
         Cookies.remove("auth_token");
         setIsAuthenticated(false);
         setUser(null);
-        localStorage.removeItem("current_user");
+        localStorage.removeItem("currentUser");
       }
     } else {
       setIsAuthenticated(false);
       setUser(null);
-      localStorage.removeItem("current_user");
+      localStorage.removeItem("currentUser");
     }
   }, [token, data, error]);
 
@@ -48,14 +48,14 @@ export const AuthProvider = ({ children }) => {
     Cookies.set("auth_token", token, { expires: 1, secure: true });
     setIsAuthenticated(true);
     setUser(userData);
-    localStorage.setItem("current_user", JSON.stringify(userData));
+    localStorage.setItem("currentUser", JSON.stringify(userData));
   };
 
   const logout = () => {
     Cookies.remove("auth_token");
     setIsAuthenticated(false);
     setUser(null);
-    localStorage.removeItem("current_user");
+    localStorage.removeItem("currentUser");
   };
 
   const value = {

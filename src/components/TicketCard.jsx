@@ -1,15 +1,17 @@
 import { NumberChip, StatusChip, PriorityChip } from "@/components/Chip";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { Calendar, Paperclip, ChartColumnStacked, UserRoundPen } from "lucide-react";
+import { NavLink } from "react-router";
 
 const TicketCard = (ticket) => {
-  const { title, description, number, status, priority, createdAt, category, assignedTo, attachments } = ticket.ticket;
+  const { title, description, number, status, priority, createdAt, category, assignedTo, attachments } = ticket.ticket || {};
   return (
-    <div className="border border-gray-200 p-4 rounded shadow hover:shadow-lg">
-      <div className="flex space-x-2 mb-4">
-        <NumberChip label={number} />
-        <StatusChip label={status} />
-        <PriorityChip label={priority} />
+    <NavLink to={`/ticket/${ticket.ticket.id}`}>
+      <div className="border border-gray-200 p-4 rounded shadow hover:shadow-lg">
+        <div className="flex space-x-2 mb-4">
+          <NumberChip label={number} />
+          <StatusChip label={status} />
+          <PriorityChip label={priority} />
       </div>
       <h2 className="font-bold text-md text-gray-800">{title}</h2>
       <p className="text-sm text-gray-500">
@@ -36,6 +38,7 @@ const TicketCard = (ticket) => {
         )}
       </div>
     </div>
+    </NavLink>
   );
 };
 

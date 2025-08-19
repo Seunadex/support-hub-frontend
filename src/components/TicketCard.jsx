@@ -34,7 +34,7 @@ const TicketCard = (ticket) => {
         </div>
 
         {assignedTo && (
-          <span className="text-xs text-gray-500">Assigned to: <UserRoundPen size={15} /> {assignedTo.firstName} {assignedTo.lastName}</span>
+          <span className="text-xs text-gray-500 flex items-center space-x-1">Assigned to: <UserRoundPen size={15} /> {assignedTo.firstName} {assignedTo.lastName}</span>
         )}
       </div>
     </div>

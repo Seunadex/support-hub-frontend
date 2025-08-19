@@ -7,6 +7,7 @@ const SIGN_IN = gql`
         id
         firstName
         lastName
+        fullName
         role
         email
       }

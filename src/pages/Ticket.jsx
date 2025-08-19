@@ -12,21 +12,40 @@ import {
 import { formatDistanceToNow, parseISO, format } from "date-fns";
 import { humanize } from "@/utils/function";
 import { useAssignTicket } from "@/graphql/mutations/assignTicket";
+import { useAddComment } from "@/graphql/mutations/addComment";
+import CommentCard from "@/components/CommentCard";
 
 const Ticket = () => {
   const { id } = useParams();
   const { loading, ticket } = useGetTicket(id);
-  const { assignTicket, loading: assigning } = useAssignTicket(id, (updatedTicket) => {
-    // Handle successful assignment
-    console.log(updatedTicket);
-  });
+  const [comment, setComment] = useState("");
+  const { assignTicket, loading: assigning } = useAssignTicket(
+    id,
+    (updatedTicket) => {
+      // Handle successful assignment
+      console.log(updatedTicket);
+    }
+  );
+  const { addComment, loading: commentLoading } = useAddComment(
+    id,
+    comment,
+    (data) => {
+      setComment("");
+    }
+  );
   const currentUser = JSON.parse(localStorage.getItem("currentUser"));
   const agentCanComment = ticket?.assignedTo?.id === currentUser?.id;
   const customerCanComment = ticket?.agentHasReplied;
 
-  const [comment, setComment] = useState("");
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    try {
+      if (!comment.trim()) return;
+      addComment();
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
   };
 
   if (loading) return <p>Loading...</p>;
@@ -97,6 +116,11 @@ const Ticket = () => {
               <p className="text-gray-500">No attachments</p>
             )}
           </div>
+
+          {ticket.comments.map((comment) => (
+            <CommentCard key={comment.id} comment={comment} />
+          ))}
+
           {(agentCanComment || customerCanComment) && (
             <div className="bg-white border border-gray-300 p-6 rounded-lg mt-4">
               <p className="font-medium mb-4">Add Response</p>
@@ -105,12 +129,15 @@ const Ticket = () => {
                   className="border border-gray-300 p-2 rounded-lg w-full bg-slate-50 text-sm"
                   rows={4}
                   placeholder="Type your response here..."
+                  onChange={(e) => setComment(e.target.value)}
+                  value={comment}
                 ></textarea>
                 <button
                   type="submit"
-                  className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg flex self-end text-sm items-center space-x-1"
+                  className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg flex self-end text-sm items-center space-x-1 cursor-pointer"
                 >
-                  <Send size={15} /> <span>Send Response</span>
+                  <Send size={15} />{" "}
+                  <span>{commentLoading ? "Sending..." : "Send Response"}</span>
                 </button>
               </form>
             </div>
@@ -158,9 +185,11 @@ const Ticket = () => {
                 <HatGlasses size={35} />
                 <div>
                   <p className="text-gray-700 font-medium">
-                    {ticket.assignedTo.firstName} {ticket.assignedTo.lastName}
+                    {ticket.assignedTo.fullName}
                   </p>
-                  <p className="text-gray-500 text-sm">{ticket.assignedTo.email}</p>
+                  <p className="text-gray-500 text-sm">
+                    {ticket.assignedTo.email}
+                  </p>
                 </div>
               </div>
             ) : (

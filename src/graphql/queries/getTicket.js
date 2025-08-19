@@ -20,8 +20,7 @@ export const GET_TICKET = gql`
       }
       assignedTo {
         id
-        firstName
-        lastName
+        fullName
         email
       }
       firstResponseAt
@@ -29,6 +28,17 @@ export const GET_TICKET = gql`
         id
         filename
         url
+      }
+      comments {
+        id
+        body
+        createdAt
+        author {
+          id
+          fullName
+          role
+          email
+        }
       }
     }
   }

@@ -8,8 +8,7 @@ const ASSIGN_TICKET = gql`
         id
         assignedTo {
           id
-          firstName
-          lastName
+          fullName
         }
       }
       errors

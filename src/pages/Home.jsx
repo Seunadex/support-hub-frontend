@@ -5,8 +5,9 @@ import TicketCard from "@/components/TicketCard";
 import { useGetTickets } from "@/graphql/queries/getTickets"
 import { useCreateTicket } from "@/graphql/mutations/createTicket";
 import { AuthContext } from "@/contexts/AuthContext"
-import { Plus } from "lucide-react";
+import { Plus, Ticket, Clock3, TicketCheck, PackageOpen } from "lucide-react";
 import { useSnackbar } from 'notistack'
+import { useGetTicketStatCount } from "@/graphql/queries/getTicketStatCount";
 
 const Home = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -31,6 +32,9 @@ const Home = () => {
 
   const { tickets, loading: ticketsLoading } = useGetTickets();
   const { createTicket, loading, error } = useCreateTicket(createTicketCallback);
+  const { data, loading: statsLoading } = useGetTicketStatCount();
+
+  console.log(data, 'Ticket Stats');
 
   return (
     <div className="bg-gray-50 min-h-screen p-5">
@@ -58,10 +62,22 @@ const Home = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-7">
-        <div className="bg-white p-4 rounded shadow">Ticket 1</div>
-        <div className="bg-white p-4 rounded shadow">Ticket 2</div>
-        <div className="bg-white p-4 rounded shadow">Ticket 3</div>
-        <div className="bg-white p-4 rounded shadow">Ticket 4</div>
+        <div className="bg-blue-50 p-4 rounded shadow">
+          <div className="flex justify-between items-center"><p className="text-sm text-gray-500">Total Tickets</p><Ticket size={15} /></div>
+          <p className="text-lg font-semibold">{data?.ticketStatCount?.total}</p>
+        </div>
+        <div className="bg-red-50 p-4 rounded shadow">
+          <div className="flex justify-between items-center"><p className="text-sm text-gray-500">Open</p><PackageOpen size={15} /></div>
+          <p className="text-lg font-semibold">{data?.ticketStatCount?.open}</p>
+        </div>
+        <div className="bg-yellow-50 p-4 rounded shadow">
+          <div className="flex justify-between items-center"><p className="text-sm text-gray-500">Pending</p><Clock3 size={15} /></div>
+          <p className="text-lg font-semibold">{data?.ticketStatCount?.pending}</p>
+        </div>
+        <div className="bg-green-50 p-4 rounded shadow">
+          <div className="flex justify-between items-center"><p className="text-sm text-gray-500">Resolved</p><TicketCheck size={15} /></div>
+          <p className="text-lg font-semibold">{data?.ticketStatCount?.resolved}</p>
+        </div>
       </div>
 
         {ticketsLoading ? (

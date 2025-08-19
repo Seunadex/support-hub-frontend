@@ -1,5 +1,6 @@
 import { gql, useMutation } from "@apollo/client";
 import { GET_TICKETS } from "@/graphql/queries/getTickets";
+import { GET_TICKET_STAT_COUNT } from "../queries/getTicketStatCount";
 
 const CREATE_TICKET = gql`
   mutation CreateTicket($title: String!, $description: String!, $category: String!, $priority: String!, $attachments: [Upload!]) {
@@ -30,6 +31,9 @@ export const useCreateTicket = (callbackAction) => {
     refetchQueries: [
           {
             query: GET_TICKETS,
+          },
+          {
+            query: GET_TICKET_STAT_COUNT,
           },
         ],
   });

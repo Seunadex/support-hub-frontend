@@ -1,9 +1,10 @@
 import { gql, useMutation } from "@apollo/client";
 import { GET_TICKET } from "@/graphql/queries/getTicket";
+import { GET_TICKET_STAT_COUNT } from "../queries/getTicketStatCount";
 
 const ASSIGN_TICKET = gql`
   mutation AssignTicket($ticketId: String!) {
-    assignTicket(input: {ticketId: $ticketId}) {
+    assignTicket(input: { ticketId: $ticketId }) {
       ticket {
         id
         assignedTo {
@@ -31,6 +32,9 @@ export const useAssignTicket = (ticketId, callbackAction) => {
       {
         query: GET_TICKET,
         variables: { id: ticketId },
+      },
+      {
+        query: GET_TICKET_STAT_COUNT
       },
     ],
   });

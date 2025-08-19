@@ -7,16 +7,25 @@ import client from './lib/apolloClient';
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import Navbar from './components/Navbar.jsx'
 import "./index.css";
+import { SnackbarProvider } from 'notistack'
 
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ApolloProvider client={client}>
       <AuthProvider>
-        <BrowserRouter>
-          <Navbar />
-          <App />
-        </BrowserRouter>
+        <SnackbarProvider
+          maxSnack={3}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+        >
+          <BrowserRouter>
+            <Navbar />
+            <App />
+          </BrowserRouter>
+        </SnackbarProvider>
       </AuthProvider>
     </ApolloProvider>
   </StrictMode>,

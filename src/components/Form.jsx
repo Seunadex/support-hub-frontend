@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { Upload } from "lucide-react";
+import { useSnackbar } from 'notistack'
+import { X } from "lucide-react";
 
 const CATEGORIES = [
   { value: "technical_issues", label: "Technical" },
@@ -17,6 +20,7 @@ const PRIORITIES = [
 ];
 
 const Form = ({ createTicket, loading, error }) => {
+  const { enqueueSnackbar } = useSnackbar();
   const [formData, setFormData] = useState({
     category: "",
     priority: "",
@@ -37,33 +41,22 @@ const Form = ({ createTicket, loading, error }) => {
     const files = Array.from(e.target.files);
 
     const validFiles = [];
-    const fileErrors = [];
     const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
 
     files.forEach((file) => {
       if (file.size > 10 * 1024 * 1024) {
-        fileErrors.push(`${file.name} is too large. Maximum size is 10MB.`);
+        enqueueSnackbar(`${file.name} is too large. Maximum size is 10MB.`, { variant: "error" });
       } else if (!allowedTypes.includes(file.type)) {
-        fileErrors.push(
-          `${
-            file.name
-          } is not a valid file type. Allowed types are: ${allowedTypes.join(
-            ", "
-          )}`
-        );
+        enqueueSnackbar(`${file.name} is not a valid file type. Allowed types are: ${allowedTypes.join(", ")}`, { variant: "error" });
       } else {
         validFiles.push(file);
       }
     });
 
     if (selectedFiles.length + validFiles.length > 3) {
-      fileErrors.push("You can only upload a maximum of 3 files.");
+      enqueueSnackbar("You can only upload a maximum of 3 files.", { variant: "error" });
     } else {
       setSelectedFiles((prevFiles) => [...prevFiles, ...validFiles]);
-    }
-
-    if (fileErrors.length > 0) {
-      console.error(fileErrors.join("\n"));
     }
 
     e.target.value = "";
@@ -96,10 +89,11 @@ const Form = ({ createTicket, loading, error }) => {
         <div>
           <label className="block text-sm font-medium mb-2">Category</label>
           <select
-            className="border border-gray-300 p-2 w-full rounded"
+            className="border border-gray-300 p-2 w-full rounded text-sm text-gray-600"
             name="category"
             value={formData.category}
             onChange={handleChange}
+            required
           >
             <option value="">Select a category</option>
             {CATEGORIES.map((category) => (
@@ -112,10 +106,11 @@ const Form = ({ createTicket, loading, error }) => {
         <div>
           <label className="block text-sm font-medium mb-2">Priority</label>
           <select
-            className="border border-gray-300 p-2 w-full rounded"
+            className="border border-gray-300 p-2 w-full rounded text-sm text-gray-600"
             name="priority"
             value={formData.priority}
             onChange={handleChange}
+            required
           >
             <option value="">Select a priority</option>
             {PRIORITIES.map((priority) => (
@@ -130,29 +125,34 @@ const Form = ({ createTicket, loading, error }) => {
         <label className="block text-sm font-medium mb-2">Title</label>
         <input
           type="text"
-          className="border border-gray-300 p-2 w-full rounded"
+          className="border border-gray-300 p-2 w-full text-sm rounded"
           placeholder="Enter ticket title"
           name="title"
           value={formData.title}
           onChange={handleChange}
+          required
         />
       </div>
       <div className="mb-4">
         <label className="block text-sm font-medium mb-2">Description</label>
         <textarea
-          className="border border-gray-300 p-2 w-full rounded"
+          className="border border-gray-300 p-2 w-full rounded text-sm"
           rows="4"
-          placeholder="Enter ticket description"
+          placeholder="Please provide detailed information about your issue."
           name="description"
           value={formData.description}
           onChange={handleChange}
+          required
         ></textarea>
       </div>
       <div className="mb-4">
         <label className="block text-sm font-medium mb-2">Attachments</label>
-        <div className="border-2 border-dashed border-border rounded-lg p-4">
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-2">Click to select files</p>
+        <div className="border-2 border-dashed border-gray-400 rounded-lg p-4">
+          <div className="flex flex-col items-center justify-center text-gray-500">
+            <Upload size={25} />
+            <p className="text-sm text-muted-foreground mb-2">
+              Click to select files
+            </p>
             <input
               type="file"
               className="hidden"
@@ -161,7 +161,11 @@ const Form = ({ createTicket, loading, error }) => {
               onChange={handleFileChange}
               accept=".jpg,.jpeg,.png,.pdf"
             />
-            <button type="button" className="mt-2 text-sm border border-gray-600 p-2 rounded-lg" onClick={() => document.getElementById('file-upload').click()}>
+            <button
+              type="button"
+              className="mt-2 text-sm border border-gray-600 px-6 py-2 rounded-lg cursor-pointer"
+              onClick={() => document.getElementById("file-upload").click()}
+            >
               Select Files
             </button>
           </div>
@@ -169,15 +173,18 @@ const Form = ({ createTicket, loading, error }) => {
             {selectedFiles.length > 0 ? (
               <div className="space-y-2 mt-4">
                 {selectedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-secondary rounded">
-                    <span className="text-sm truncate">{file.name}</span>
-                    <div className="text-sm">{formatFileSize(file.size)}</div>
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2 bg-gray-100 rounded"
+                  >
+                    <span className="text-xs truncate">{file.name}</span>
+                    <span className="text-xs">{formatFileSize(file.size)}</span>
                     <button
                       type="button"
                       className="text-red-500 hover:underline cursor-pointer"
                       onClick={() => removeFiles(index)}
                     >
-                      X
+                      <X size={16} />
                     </button>
                   </div>
                 ))}

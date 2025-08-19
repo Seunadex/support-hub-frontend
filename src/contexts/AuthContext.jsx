@@ -6,14 +6,14 @@ import Cookies from "js-cookie";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Get token from cookies
+  const token = Cookies.get("auth_token");
+  const [isAuthenticated, setIsAuthenticated] = useState(!!token);
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("currentUser");
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  // Get token from cookies
-  const token = Cookies.get("auth_token");
 
   // Query current user if token exists
   const { data, loading, error } = useQuery(GET_CURRENT_USER, {

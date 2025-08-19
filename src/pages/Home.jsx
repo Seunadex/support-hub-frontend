@@ -6,11 +6,14 @@ import { useGetTickets } from "@/graphql/queries/getTickets"
 import Cookies from "js-cookie"
 import { useCreateTicket } from "@/graphql/mutations/createTicket";
 import { AuthContext } from "@/contexts/AuthContext"
+import { Plus } from "lucide-react";
+import { useSnackbar } from 'notistack'
 
 const Home = () => {
+  const { enqueueSnackbar } = useSnackbar();
   const context = useContext(AuthContext);
   const { user } = context;
-  // const isAgent = user?.role === "agent";
+
   const isCustomer = user?.role === "customer";
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -18,12 +21,14 @@ const Home = () => {
   const closeModal = () => setIsModalOpen(false);
 
   const createTicketCallback = (result) => {
-    if (result?.data?.createTicket?.ticket) {
-      console.log("Ticket created:", result.data.createTicket.ticket);
+    if (result?.createTicket?.ticket) {
+      enqueueSnackbar("Ticket created successfully", { variant: "success" });
+      closeModal();
     } else {
-      console.error("Error creating ticket:", result?.data?.createTicket?.errors);
+      result?.createTicket?.errors.forEach((error) => {
+        enqueueSnackbar(error, { variant: "error" });
+      });
     }
-    closeModal();
   };
 
   const { tickets, loading: ticketsLoading } = useGetTickets();
@@ -33,7 +38,7 @@ const Home = () => {
     <div className="bg-gray-50 min-h-screen p-5">
       <div className="flex justify-between items-center">
         <div className="">
-          <h1 className="text-3xl font-bold">Your Support Tickets</h1>
+          <h1 className="text-3xl font-bold">{isCustomer ? "Your Support Tickets" : "Support Tickets"}</h1>
           <p className="text-md text-gray-600">
             Track and manage your support requests in one place.
           </p>
@@ -41,10 +46,10 @@ const Home = () => {
         {isCustomer && (
           <button
             type="button"
-            className="bg-blue-500 text-white px-4 py-2 rounded"
+            className="bg-blue-500 text-white px-3 py-1.5 rounded flex items-center space-x-2"
             onClick={openModal}
           >
-            + New Ticket
+            <Plus size={20} /> <span>New Ticket</span>
           </button>
         )}
         <Modal

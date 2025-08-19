@@ -3,7 +3,6 @@ import Modal from "@/components/Modal";
 import Form from "@/components/Form";
 import TicketCard from "@/components/TicketCard";
 import { useGetTickets } from "@/graphql/queries/getTickets"
-import Cookies from "js-cookie"
 import { useCreateTicket } from "@/graphql/mutations/createTicket";
 import { AuthContext } from "@/contexts/AuthContext"
 import { Plus } from "lucide-react";
@@ -11,8 +10,7 @@ import { useSnackbar } from 'notistack'
 
 const Home = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const context = useContext(AuthContext);
-  const { user } = context;
+  const { user } = useContext(AuthContext)
 
   const isCustomer = user?.role === "customer";
   const [isModalOpen, setIsModalOpen] = useState(false);

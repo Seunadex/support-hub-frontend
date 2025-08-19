@@ -47,6 +47,7 @@ export const GET_TICKET = gql`
 export const useGetTicket = (id) => {
   const { loading, error, data } = useQuery(GET_TICKET, {
     variables: { id },
+    notifyOnNetworkStatusChange: true
   });
 
   return {

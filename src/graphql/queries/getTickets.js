@@ -31,7 +31,11 @@ export const GET_TICKETS = gql`
 `;
 
 export const useGetTickets = () => {
-  const { data, loading, error } = useQuery(GET_TICKETS);
+  const { data, loading, error } = useQuery(GET_TICKETS, {
+    errorPolicy: "all",
+    fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true
+  });
 
   if (loading) return { loading, tickets: [], error };
   return { tickets: data?.tickets || [], loading, error };

@@ -15,11 +15,13 @@ export const AuthProvider = ({ children }) => {
   });
 
 
+
   // Query current user if token exists
   const { data, loading, error } = useQuery(GET_CURRENT_USER, {
     skip: !token, // Skip query if no token
     errorPolicy: 'all',
-    fetchPolicy: 'cache-and-network' // Ensures fresh data on refresh
+    fetchPolicy: 'network-only',
+    notifyOnNetworkStatusChange: true
   });
 
   // Handle authentication state based on token and user data
@@ -27,7 +29,7 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       if (data?.getCurrentUser) {
         setUser(data.getCurrentUser);
-        localStorage.setItem("currentUser", JSON.stringify(data.getCurrentUser));
+        localStorage.setItem("currentUser", JSON.stringify(data?.getCurrentUser));
         setIsAuthenticated(true);
       } else if (error) {
         // Token might be invalid, clear it

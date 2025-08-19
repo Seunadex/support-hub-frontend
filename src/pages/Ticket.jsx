@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useParams, NavLink } from "react-router";
 import { useGetTicket } from "@/graphql/queries/getTicket";
 import { NumberChip, StatusChip, PriorityChip } from "@/components/Chip";
@@ -14,6 +14,7 @@ import { humanize } from "@/utils/function";
 import { useAssignTicket } from "@/graphql/mutations/assignTicket";
 import { useAddComment } from "@/graphql/mutations/addComment";
 import CommentCard from "@/components/CommentCard";
+import { AuthContext } from "@/contexts/AuthContext";
 
 const Ticket = () => {
   const { id } = useParams();
@@ -33,7 +34,7 @@ const Ticket = () => {
       setComment("");
     }
   );
-  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  const { user: currentUser } = useContext(AuthContext);
   const agentCanComment = ticket?.assignedTo?.id === currentUser?.id;
   const customerCanComment = ticket?.agentHasReplied;
 

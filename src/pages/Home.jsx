@@ -66,15 +66,21 @@ const Home = () => {
         <div className="bg-white p-4 rounded shadow">Ticket 4</div>
       </div>
 
-      <div className="border border-gray-200 mt-7 rounded-md bg-white grid grid-cols-1 lg:grid-cols-2 gap-4 p-6">
         {ticketsLoading ? (
           <p>Loading...</p>
         ) : (
-          tickets.map(ticket => (
-            <TicketCard key={ticket.id} ticket={ticket}/>
-          ))
+            tickets.length > 0 ? (
+              <div className="border border-gray-200 mt-7 rounded-md bg-white grid grid-cols-1 lg:grid-cols-2 gap-4 p-6">
+                {tickets.map(ticket => (
+                  <TicketCard key={ticket.id} ticket={ticket}/>
+                ))}
+              </div>
+            ) : (
+            <p className="text-gray-600 text-center my-10 text-xl">No tickets found.</p>
+          )
         )}
-      </div>
+
+
     </div>
   );
 };

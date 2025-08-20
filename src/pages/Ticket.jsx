@@ -15,11 +15,20 @@ import { useAssignTicket } from "@/graphql/mutations/assignTicket";
 import { useAddComment } from "@/graphql/mutations/addComment";
 import CommentCard from "@/components/CommentCard";
 import { AuthContext } from "@/contexts/AuthContext";
+import Modal from "@/components/Modal";
+import { useResolveTicket } from "../graphql/mutations/resolveTicket";
+import { useCloseTicket } from "../graphql/mutations/closeTicket";
+import { useSnackbar } from "notistack";
 
 const Ticket = () => {
+  const { enqueueSnackbar } = useSnackbar();
   const { id } = useParams();
   const { loading, ticket } = useGetTicket(id);
   const [comment, setComment] = useState("");
+  const [closeTicketModalOpen, setCloseTicketModalOpen] = useState(false);
+  const [resolveTicketModalOpen, setResolveTicketModalOpen] = useState(false);
+
+  // Mutation Hooks
   const { assignTicket, loading: assigning } = useAssignTicket(
     id,
     (updatedTicket) => {
@@ -31,12 +40,44 @@ const Ticket = () => {
     id,
     comment,
     (data) => {
-      setComment("");
+      if (data?.addComment?.ticket) {
+        enqueueSnackbar("Comment added successfully", { variant: "success" });
+        return setComment("");
+      } else {
+        data?.addComment?.errors.forEach((error) => {
+          enqueueSnackbar(error, { variant: "error" });
+        });
+      }
     }
   );
+  const { closeTicket, isClosing } = useCloseTicket(id, (result) => {
+    if (result.closeTicket.success) {
+      return setCloseTicketModalOpen(false);
+    }
+
+    result?.closeTicket?.errors.forEach((error) => {
+      enqueueSnackbar(error, { variant: "error" });
+    });
+  });
+  const { resolveTicket, isResolving } = useResolveTicket(id, (result) => {
+    if (result.resolveTicket.success) {
+      return setResolveTicketModalOpen(false);
+    }
+
+    result?.resolveTicket?.errors.forEach((error) => {
+      enqueueSnackbar(error, { variant: "error" });
+    });
+  });
+
   const { user: currentUser } = useContext(AuthContext);
-  const agentCanComment = ticket?.assignedTo?.id === currentUser?.id;
-  const customerCanComment = ticket?.agentHasReplied;
+  const agentCanComment = ticket?.agentCanComment;
+  const customerCanComment = ticket?.customerCanComment;
+  const canResolve = ticket?.canResolve;
+  const canClose = ticket?.canClose;
+  const isCompleted =
+    ticket?.status === "resolved" || ticket?.status === "closed";
+  const isResolved = ticket?.status === "resolved";
+  const isClosed = ticket?.status === "closed";
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -75,9 +116,7 @@ const Ticket = () => {
               <UserRound size={30} />
               <div>
                 <div className="flex items-center space-x-3">
-                  <p className="font-medium">
-                    {ticket.customer.firstName}
-                  </p>
+                  <p className="font-medium">{ticket.customer.firstName}</p>
                   <div className="text-gray-600 px-2 bg-gray-200 rounded-xl text-xs whitespace-nowrap">
                     {ticket.customer.role}
                   </div>
@@ -117,12 +156,13 @@ const Ticket = () => {
               <p className="text-gray-500">No attachments</p>
             )}
           </div>
-
           {ticket.comments.map((comment) => (
             <CommentCard key={comment.id} comment={comment} />
           ))}
-
-          {(agentCanComment || customerCanComment) && (
+          {/* TODO: Simplify complex conditionals */}
+          {((!isCompleted && ticket?.agentHasReplied) ||
+            agentCanComment ||
+            customerCanComment) && (
             <div className="bg-white border border-gray-300 p-6 rounded-lg mt-4">
               <p className="font-medium mb-4">Add Response</p>
               <form className="flex flex-col" onSubmit={handleSubmit}>
@@ -193,19 +233,81 @@ const Ticket = () => {
                   </p>
                 </div>
               </div>
+            ) : currentUser?.role === "agent" ? (
+              <button
+                className="border border-gray-500 px-4 py-1 rounded-md text-sm whitespace-nowrap cursor-pointer"
+                onClick={() => assignTicket()}
+                disabled={assigning}
+              >
+                {assigning ? "Assigning..." : "Assign to Me"}
+              </button>
             ) : (
-              currentUser?.role === "agent" ? (
-                <button
-                  className="border border-gray-500 px-4 py-1 rounded-md text-sm whitespace-nowrap cursor-pointer"
-                  onClick={() => assignTicket()}
-                  disabled={assigning}
-                >
-                  {assigning ? "Assigning..." : "Assign to Me"}
-                </button>
-              ) : (
-                <p className="text-gray-500 text-sm">Unassigned</p>
-              )
+              <p className="text-gray-500 text-sm">Unassigned</p>
             )}
+          </div>
+          <div className="bg-white border border-gray-300 p-4 rounded-lg mt-5 flex space-x-3 flex flex-col">
+            <p className="font-medium mb-4">Actions</p>
+            <div className="space-x-3">
+              <button
+                type="button"
+                className="bg-green-500 text-white text-sm px-4 py-1 rounded-lg hover:cursor-pointer hover:not-disabled:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setResolveTicketModalOpen(true)}
+                disabled={!canResolve}
+              >
+                {isClosed || isResolved ? "Resolved" : "Resolve"}
+              </button>
+              {!isClosed && canClose && (
+                <button
+                  type="button"
+                  className="bg-red-500 text-white px-4 py-1 rounded-lg text-sm"
+                  onClick={() => setCloseTicketModalOpen(true)}
+                >
+                  {ticket?.status === "closed" ? "Closed" : "Close"}
+                </button>
+              )}
+            </div>
+            <Modal
+              title="Resolve Ticket"
+              isOpen={resolveTicketModalOpen}
+              onClose={() => setResolveTicketModalOpen(false)}
+            >
+              <p>Are you sure you want to resolve this ticket?</p>
+              <div className="flex justify-end mt-4">
+                <button
+                  className="bg-gray-300 text-gray-700 px-4 py-1 rounded-md mr-2 text-sm cursor-pointer"
+                  onClick={() => setResolveTicketModalOpen(false)}
+                >
+                  No
+                </button>
+                <button
+                  className="bg-green-500 text-white px-4 py-1 rounded-md text-sm cursor-pointer"
+                  onClick={resolveTicket}
+                >
+                  {isResolving ? "Resolving..." : "Yes, resolve it"}
+                </button>
+              </div>
+            </Modal>
+            <Modal
+              title="Close Ticket"
+              isOpen={closeTicketModalOpen}
+              onClose={() => setCloseTicketModalOpen(false)}
+            >
+              <p>Are you sure you want to close this ticket?</p>
+              <div className="flex justify-end mt-4">
+                <button
+                  className="bg-gray-300 text-gray-700 px-4 py-1 rounded-md mr-2 text-sm cursor-pointer"
+                  onClick={() => setCloseTicketModalOpen(false)}
+                >
+                  No
+                </button>
+                <button
+                  className="bg-red-500 text-white px-4 py-1 rounded-md text-sm cursor-pointer"
+                  onClick={closeTicket}
+                >
+                  {isClosing ? "Closing..." : "Yes, close it"}
+                </button>
+              </div>
+            </Modal>
           </div>
         </div>
       </div>

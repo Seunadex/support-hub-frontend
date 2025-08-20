@@ -75,8 +75,8 @@ const Home = () => {
           <p className="text-lg font-semibold">{data?.ticketStatCount?.pending}</p>
         </div>
         <div className="bg-green-50 p-4 rounded shadow">
-          <div className="flex justify-between items-center"><p className="text-sm text-gray-500">Resolved</p><TicketCheck size={15} /></div>
-          <p className="text-lg font-semibold">{data?.ticketStatCount?.resolved}</p>
+          <div className="flex justify-between items-center"><p className="text-sm text-gray-500">{isCustomer ? "Resolved or Closed" : "Completed"}</p><TicketCheck size={15} /></div>
+          <p className="text-lg font-semibold">{data?.ticketStatCount?.completed}</p>
         </div>
       </div>
 

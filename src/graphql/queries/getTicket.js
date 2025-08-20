@@ -29,6 +29,10 @@ export const GET_TICKET = gql`
         filename
         url
       }
+      canClose
+      canResolve
+      agentCanComment
+      customerCanComment
       comments {
         id
         body
@@ -47,7 +51,7 @@ export const GET_TICKET = gql`
 export const useGetTicket = (id) => {
   const { loading, error, data } = useQuery(GET_TICKET, {
     variables: { id },
-    notifyOnNetworkStatusChange: true
+    notifyOnNetworkStatusChange: true,
   });
 
   return {

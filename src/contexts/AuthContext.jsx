@@ -1,73 +1,153 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useMemo, useCallback } from "react";
+import Cookies from "js-cookie";
 import { useQuery } from "@apollo/client";
 import { GET_CURRENT_USER } from "../graphql/queries/getCurrentUser";
-import Cookies from "js-cookie";
+
+// Cookie helpers
+const COOKIE_NAME = "auth_token";
+const readToken = () => Cookies.get(COOKIE_NAME) || null;
+const setToken = token => {
+  const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+  Cookies.set(COOKIE_NAME, token, {
+    expires: 1,
+    secure: isHttps,
+    sameSite: "lax",
+  });
+};
+const clearToken = () => Cookies.remove(COOKIE_NAME);
+
+// Cross-tab sync key
+const AUTH_EVENT_KEY = "auth_event";
+
+// Detect true auth failures, not transient network errors
+const isAuthError = err => {
+  if (!err) return false;
+  const http = err.networkError;
+  const status = http?.statusCode || http?.response?.status;
+  if (status === 401 || status === 403) return true;
+  return (err.graphQLErrors || []).some(
+    e => e?.extensions?.code === "UNAUTHENTICATED" || e?.extensions?.code === "FORBIDDEN"
+  );
+};
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  // Get token from cookies
-  const token = Cookies.get("auth_token");
-  const [isAuthenticated, setIsAuthenticated] = useState(!!token);
+  const [hasToken, setHasToken] = useState(() => !!readToken());
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!readToken());
+
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("currentUser");
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      const saved = localStorage.getItem("currentUser");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
 
-  // Query current user if token exists
-  const { data, loading, error } = useQuery(GET_CURRENT_USER, {
-    skip: !token, // Skip query if no token
+  const { data, loading, error, refetch } = useQuery(GET_CURRENT_USER, {
+    skip: !hasToken,
     errorPolicy: "all",
     fetchPolicy: "network-only",
     notifyOnNetworkStatusChange: true,
   });
 
-  // Handle authentication state based on token and user data
+  // Apply query results to state
   useEffect(() => {
-    if (token) {
-      if (data?.getCurrentUser) {
-        setUser(data.getCurrentUser);
-        localStorage.setItem(
-          "currentUser",
-          JSON.stringify(data?.getCurrentUser)
-        );
-        setIsAuthenticated(true);
-      } else if (error) {
-        // Token might be invalid, clear it
-        console.error("Error fetching current user:", error);
-        Cookies.remove("auth_token");
-        setIsAuthenticated(false);
-        setUser(null);
-        localStorage.removeItem("currentUser");
-      }
-    } else {
+    if (!hasToken) {
+      setIsAuthenticated(false);
+      setUser(null);
+      localStorage.removeItem("currentUser");
+      return;
+    }
+
+    if (data?.getCurrentUser) {
+      setUser(data.getCurrentUser);
+      localStorage.setItem("currentUser", JSON.stringify(data.getCurrentUser));
+      setIsAuthenticated(true);
+      return;
+    }
+
+    // Only logout on true auth failures
+    if (error && isAuthError(error)) {
+      clearToken();
+      setHasToken(false);
       setIsAuthenticated(false);
       setUser(null);
       localStorage.removeItem("currentUser");
     }
-  }, [token, data, error]);
+  }, [hasToken, data, error]);
 
-  const login = (token, userData) => {
-    Cookies.set("auth_token", token, { expires: 1, secure: true });
+  // Refetch on focus or when tab becomes visible, ignore offline
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const safeRefetch = async () => {
+      if (!navigator.onLine) return;
+      try {
+        await refetch?.();
+      } catch {
+        // ignore transient errors
+      }
+    };
+
+    const onFocus = () => safeRefetch();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") safeRefetch();
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [isAuthenticated, refetch]);
+
+  // Cross-tab login/logout sync
+  useEffect(() => {
+    const onStorage = e => {
+      if (e.key !== AUTH_EVENT_KEY) return;
+      setHasToken(!!readToken());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  const login = useCallback((token, userData) => {
+    setToken(token);
+    setHasToken(true);
     setIsAuthenticated(true);
     setUser(userData);
     localStorage.setItem("currentUser", JSON.stringify(userData));
-  };
+    localStorage.setItem(AUTH_EVENT_KEY, String(Date.now()));
+  }, []);
 
-  const logout = () => {
-    Cookies.remove("auth_token");
+  const logout = useCallback(() => {
+    clearToken();
+    setHasToken(false);
     setIsAuthenticated(false);
     setUser(null);
     localStorage.removeItem("currentUser");
-  };
+    localStorage.setItem(AUTH_EVENT_KEY, String(Date.now()));
+  }, []);
 
-  const value = {
-    user,
-    isAuthenticated,
-    login,
-    logout,
-    loading,
-  };
+  const refresh = useCallback(() => {
+    if (hasToken) return refetch?.();
+    return Promise.resolve();
+  }, [hasToken, refetch]);
+
+  const value = useMemo(
+    () => ({
+      user,
+      isAuthenticated,
+      loading,
+      login,
+      logout,
+      refresh,
+    }),
+    [user, isAuthenticated, loading, login, logout, refresh]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -18,6 +18,7 @@ export const useFetchUser = (id) => {
     variables: {
       id,
     },
+    fetchPolicy: "cache-and-network",
     notifyOnNetworkStatusChange: true
   });
 

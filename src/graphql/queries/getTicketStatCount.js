@@ -13,7 +13,7 @@ export const GET_TICKET_STAT_COUNT = gql`
 
 export const useGetTicketStatCount = () => {
   const { data, loading, error } = useQuery(GET_TICKET_STAT_COUNT, {
-    fetchPolicy: "cache-and-network",
+    fetchPolicy: "cache-first",
     errorPolicy: "all",
     notifyOnNetworkStatusChange: true
   });

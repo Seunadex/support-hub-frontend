@@ -1,7 +1,6 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useMemo, useCallback } from "react";
 import { useParams, NavLink } from "react-router";
-import { useGetTicket } from "@/graphql/queries/getTicket";
-import { NumberChip, StatusChip, PriorityChip } from "@/components/Chip";
+import { formatDistanceToNow, parseISO, format, isValid } from "date-fns";
 import {
   ArrowLeft,
   UserRound,
@@ -9,183 +8,248 @@ import {
   HatGlasses,
   Send,
 } from "lucide-react";
-import { formatDistanceToNow, parseISO, format } from "date-fns";
+
+import { useSnackbar } from "notistack";
+
+// Context
+import { AuthContext } from "@/contexts/AuthContext";
+
+// Utils
 import { humanize } from "@/utils/function";
+
+// Components
+import { NumberChip, StatusChip, PriorityChip } from "@/components/Chip";
+import CommentCard from "@/components/CommentCard";
+import Modal from "@/components/Modal";
+
+// GraphQL queries & mutations
+import { useGetTicket } from "@/graphql/queries/getTicket";
 import { useAssignTicket } from "@/graphql/mutations/assignTicket";
 import { useAddComment } from "@/graphql/mutations/addComment";
-import CommentCard from "@/components/CommentCard";
-import { AuthContext } from "@/contexts/AuthContext";
-import Modal from "@/components/Modal";
-import { useResolveTicket } from "../graphql/mutations/resolveTicket";
-import { useCloseTicket } from "../graphql/mutations/closeTicket";
-import { useSnackbar } from "notistack";
+import { useResolveTicket } from "@/graphql/mutations/resolveTicket";
+import { useCloseTicket } from "@/graphql/mutations/closeTicket";
+
+const LineSkeleton = () => (
+  <div className="animate-pulse h-4 bg-gray-200 rounded w-full" />
+);
+
+const CardSkeleton = () => (
+  <div className="bg-white border border-gray-300 p-6 rounded-lg">
+    <div className="flex items-center gap-2 mb-5">
+      <div className="h-5 w-12 bg-gray-200 rounded animate-pulse" />
+      <div className="h-5 w-16 bg-gray-200 rounded animate-pulse" />
+      <div className="h-5 w-16 bg-gray-200 rounded animate-pulse" />
+    </div>
+    <div className="space-y-3">
+      <LineSkeleton />
+      <LineSkeleton />
+      <LineSkeleton />
+    </div>
+  </div>
+);
+
+const SafeDate = ({ iso, formatStr = "MMM d, yyyy, hh:mm:ss a" }) => {
+  const d = parseISO(iso || "");
+  if (!iso || !isValid(d)) return <span className="text-gray-500">Unknown</span>;
+  return <span title={d.toISOString()}>{format(d, formatStr)}</span>;
+};
 
 const Ticket = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { id } = useParams();
   const { loading, ticket } = useGetTicket(id);
+
   const [comment, setComment] = useState("");
   const [closeTicketModalOpen, setCloseTicketModalOpen] = useState(false);
   const [resolveTicketModalOpen, setResolveTicketModalOpen] = useState(false);
 
-  // Mutation Hooks
-  const { assignTicket, loading: assigning } = useAssignTicket(
-    id,
-    (updatedTicket) => {
-      // Handle successful assignment
-      console.log(updatedTicket);
-    }
-  );
-  const { addComment, loading: commentLoading } = useAddComment(
-    id,
-    comment,
-    (data) => {
-      if (data?.addComment?.ticket) {
-        enqueueSnackbar("Comment added successfully", { variant: "success" });
-        return setComment("");
-      } else {
-        data?.addComment?.errors.forEach((error) => {
-          enqueueSnackbar(error, { variant: "error" });
-        });
-      }
-    }
-  );
-  const { closeTicket, isClosing } = useCloseTicket(id, (result) => {
-    if (result.closeTicket.success) {
-      return setCloseTicketModalOpen(false);
-    }
-
-    result?.closeTicket?.errors.forEach((error) => {
-      enqueueSnackbar(error, { variant: "error" });
-    });
-  });
-  const { resolveTicket, isResolving } = useResolveTicket(id, (result) => {
-    if (result.resolveTicket.success) {
-      return setResolveTicketModalOpen(false);
-    }
-
-    result?.resolveTicket?.errors.forEach((error) => {
-      enqueueSnackbar(error, { variant: "error" });
-    });
-  });
-
   const { user: currentUser } = useContext(AuthContext);
-  const agentCanComment = ticket?.agentCanComment;
-  const customerCanComment = ticket?.customerCanComment;
-  const canResolve = ticket?.canResolve;
-  const canClose = ticket?.canClose;
-  const isCompleted =
-    ticket?.status === "resolved" || ticket?.status === "closed";
+
+  const {
+    assignTicket,
+    loading: assigning,
+  } = useAssignTicket(id, updatedTicket => {
+    if (updatedTicket) enqueueSnackbar("Ticket assigned", { variant: "success" });
+  });
+
+  const { addComment, loading: commentLoading } = useAddComment(id, comment, data => {
+    if (data?.addComment?.ticket) {
+      enqueueSnackbar("Comment added", { variant: "success" });
+      setComment("");
+      return;
+    }
+    (data?.addComment?.errors || []).forEach(err => enqueueSnackbar(err, { variant: "error" }));
+  });
+
+  const { closeTicket, isClosing } = useCloseTicket(id, result => {
+    if (result?.closeTicket?.success) {
+      setCloseTicketModalOpen(false);
+      enqueueSnackbar("Ticket closed", { variant: "success" });
+      return;
+    }
+    (result?.closeTicket?.errors || []).forEach(err => enqueueSnackbar(err, { variant: "error" }));
+  });
+
+  const { resolveTicket, isResolving } = useResolveTicket(id, result => {
+    if (result?.resolveTicket?.success) {
+      setResolveTicketModalOpen(false);
+      enqueueSnackbar("Ticket resolved", { variant: "success" });
+      return;
+    }
+    (result?.resolveTicket?.errors || []).forEach(err => enqueueSnackbar(err, { variant: "error" }));
+  });
+
+  const allowComment = useMemo(() => {
+    const isCompleted = ticket?.status === "resolved" || ticket?.status === "closed";
+    return (
+      (!isCompleted && ticket?.agentHasReplied) || ticket?.agentCanComment || ticket?.customerCanComment
+    );
+  }, [ticket]);
+
   const isResolved = ticket?.status === "resolved";
   const isClosed = ticket?.status === "closed";
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    e => {
+      e.preventDefault();
+      if (!comment.trim() || commentLoading) return;
+      try {
+        addComment();
+      } catch (err) {
+        enqueueSnackbar("Failed to add comment", { variant: "error" });
+      }
+    },
+    [comment, commentLoading, addComment, enqueueSnackbar]
+  );
 
-    try {
-      if (!comment.trim()) return;
-      addComment();
-    } catch (error) {
-      console.error("Error adding comment:", error);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="bg-slate-50 min-h-screen px-6 md:px-10 py-10">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="h-8 w-8 bg-gray-200 rounded-full animate-pulse" />
+          <div className="h-6 w-40 bg-gray-200 rounded animate-pulse" />
+        </div>
+        <CardSkeleton />
+      </div>
+    );
+  }
 
-  if (loading) return <p>Loading...</p>;
+  if (!ticket) {
+    return (
+      <div className="min-h-screen grid place-items-center px-6">
+        <p className="text-gray-600">Ticket not found.</p>
+      </div>
+    );
+  }
+
+  const createdAtDate = parseISO(ticket.createdAt || "");
+  const createdAgo = isValid(createdAtDate)
+    ? formatDistanceToNow(createdAtDate, { addSuffix: true })
+    : "moments ago";
 
   return (
-    <div className="bg-slate-50 min-h-screen px-20 md:px-40 py-10">
-      <div className="flex items-center space-x-4 mb-5">
-        <div className="hover:bg-gray-200 p-2 rounded-full flex items-center">
-          <NavLink to="/" className="cursor-pointer">
-            <ArrowLeft size={17} />
-          </NavLink>
-        </div>
+    <div className="bg-slate-50 min-h-screen px-6 md:px-10 lg:px-20 py-10">
+      <div className="flex items-center gap-4 mb-5">
+        <NavLink
+          to="/"
+          aria-label="Back to tickets"
+          className="hover:bg-gray-200 p-2 rounded-full inline-flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+        >
+          <ArrowLeft size={17} />
+        </NavLink>
         <div>
-          <div className="flex space-x-2 mb-4">
+          <div className="flex gap-2 mb-3">
             <NumberChip label={ticket.number} />
             <StatusChip label={ticket.status} />
             <PriorityChip label={ticket.priority} />
           </div>
-          <h1 className="text-2xl font-bold">{ticket.title}</h1>
+          <h1 className="text-2xl font-bold truncate" title={ticket.title}>
+            {ticket.title}
+          </h1>
         </div>
       </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="col-span-2">
-          <div className="bg-white border border-gray-300 p-6 rounded-lg">
-            <div className="flex items-center space-x-2 mb-5">
+        <div className="md:col-span-2">
+          <section className="bg-white border border-gray-300 p-6 rounded-lg">
+            <div className="flex items-center gap-2 mb-5">
               <UserRound size={30} />
               <div>
-                <div className="flex items-center space-x-3">
-                  <p className="font-medium">{ticket.customer.firstName}</p>
+                <div className="flex items-center gap-3">
+                  <p className="font-medium" title={ticket.customer.fullName || ticket.customer.firstName}>
+                    {ticket.customer.firstName}
+                  </p>
                   <div className="text-gray-600 px-2 bg-gray-200 rounded-xl text-xs whitespace-nowrap">
                     {ticket.customer.role}
                   </div>
                 </div>
-                <p className="text-gray-500 text-sm">
-                  Created{" "}
-                  {formatDistanceToNow(parseISO(ticket.createdAt), {
-                    addSuffix: true,
-                  })}
+                <p className="text-gray-500 text-sm" title={isValid(createdAtDate) ? createdAtDate.toISOString() : undefined}>
+                  Created {createdAgo}
                 </p>
               </div>
             </div>
-            <p className="text-slate-700">{ticket.description}</p>
+
+            <p className="text-slate-700 whitespace-pre-wrap break-words">{ticket.description}</p>
+
             <hr className="my-5 text-gray-200" />
-            <p className="flex items-center space-x-1 mb-3">
-              <Paperclip size={16} />{" "}
+
+            <p className="flex items-center gap-1 mb-3">
+              <Paperclip size={16} />
               <span className="text-sm font-medium">Attachments</span>
             </p>
+
             {ticket.attachments.length > 0 ? (
-              <div className="flex flex-col space-y-1">
-                {ticket.attachments.map((attachment) => (
-                  <div
-                    key={attachment.id}
-                    className="flex items-center space-x-1 text-blue-700"
-                  >
+              <ul className="flex flex-col gap-1">
+                {ticket.attachments.map(att => (
+                  <li key={att.id} className="flex items-center gap-1 text-blue-700">
                     <Paperclip size={12} />
-                    <NavLink
-                      to={attachment.url}
+                    <a
+                      href={att.url}
                       className="text-xs hover:underline"
+                      target="_blank"
+                      rel="noopener"
+                      title={att.filename}
                     >
-                      {attachment.filename}
-                    </NavLink>
-                  </div>
+                      {att.filename}
+                    </a>
+                  </li>
                 ))}
-              </div>
+              </ul>
             ) : (
               <p className="text-gray-500">No attachments</p>
             )}
-          </div>
-          {ticket.comments.map((comment) => (
-            <CommentCard key={comment.id} comment={comment} />
+          </section>
+
+          {Array.isArray(ticket.comments) && ticket.comments.map(c => (
+            <CommentCard key={c.id} comment={c} />
           ))}
-          {/* TODO: Simplify complex conditionals */}
-          {((!isCompleted && ticket?.agentHasReplied) ||
-            agentCanComment ||
-            customerCanComment) && (
-            <div className="bg-white border border-gray-300 p-6 rounded-lg mt-4">
+
+          {allowComment && (
+            <section className="bg-white border border-gray-300 p-6 rounded-lg mt-4">
               <p className="font-medium mb-4">Add Response</p>
               <form className="flex flex-col" onSubmit={handleSubmit}>
                 <textarea
                   className="border border-gray-300 p-2 rounded-lg w-full bg-slate-50 text-sm"
                   rows={4}
                   placeholder="Type your response here..."
-                  onChange={(e) => setComment(e.target.value)}
+                  onChange={e => setComment(e.target.value)}
                   value={comment}
-                ></textarea>
+                />
                 <button
                   type="submit"
-                  className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg flex self-end text-sm items-center space-x-1 cursor-pointer"
+                  disabled={!comment.trim() || commentLoading}
+                  className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg flex self-end text-sm items-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
-                  <Send size={15} />{" "}
+                  <Send size={15} />
                   <span>{commentLoading ? "Sending..." : "Send Response"}</span>
                 </button>
               </form>
-            </div>
+            </section>
           )}
         </div>
-        <div>
-          <div className="bg-white border border-gray-300 p-4 rounded-lg">
+
+        <aside>
+          <section className="bg-white border border-gray-300 p-4 rounded-lg">
             <p className="font-medium mb-4">Ticket Information</p>
             <div className="mb-3">
               <p className="text-gray-500 text-sm mb-1">Status</p>
@@ -197,45 +261,37 @@ const Ticket = () => {
             </div>
             <div className="mb-3">
               <p className="text-gray-500 text-sm">Category</p>
-              <p className="text-gray-700 text-sm">
-                {humanize(ticket.category)}
-              </p>
+              <p className="text-gray-700 text-sm">{humanize(ticket.category)}</p>
             </div>
             <div className="mb-3">
               <p className="text-gray-500 text-sm">Created</p>
               <p className="text-gray-700 text-sm">
-                {format(parseISO(ticket.createdAt), "MMM d, yyyy, hh:mm:ss a")}
+                <SafeDate iso={ticket.createdAt} />
               </p>
             </div>
             {ticket.firstResponseAt && (
               <div className="mb-3">
                 <p className="text-gray-500 text-sm mb-1">First Response</p>
                 <p className="text-gray-700 text-sm">
-                  {format(
-                    parseISO(ticket.firstResponseAt),
-                    "MMM d, yyyy, hh:mm:ss a"
-                  )}
+                  <SafeDate iso={ticket.firstResponseAt} />
                 </p>
               </div>
             )}
-          </div>
-          <div className="bg-white border border-gray-300 p-4 rounded-lg mt-5">
+          </section>
+
+          <section className="bg-white border border-gray-300 p-4 rounded-lg mt-5">
             <p className="font-semibold mb-4">Assigned Agent</p>
             {ticket.assignedTo ? (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <HatGlasses size={35} />
                 <div>
-                  <p className="text-gray-700 font-medium">
-                    {ticket.assignedTo.fullName}
-                  </p>
-                  <p className="text-gray-500 text-sm">
-                    {ticket.assignedTo.email}
-                  </p>
+                  <p className="text-gray-700 font-medium">{ticket.assignedTo.fullName}</p>
+                  <p className="text-gray-500 text-sm">{ticket.assignedTo.email}</p>
                 </div>
               </div>
             ) : currentUser?.role === "agent" ? (
               <button
-                className="border border-gray-500 px-4 py-1 rounded-md text-sm whitespace-nowrap cursor-pointer"
+                className="border border-gray-500 px-4 py-1 rounded-md text-sm whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-violet-400"
                 onClick={() => assignTicket()}
                 disabled={assigning}
               >
@@ -244,72 +300,78 @@ const Ticket = () => {
             ) : (
               <p className="text-gray-500 text-sm">Unassigned</p>
             )}
-          </div>
-          <div className="bg-white border border-gray-300 p-4 rounded-lg mt-5 flex space-x-3 flex flex-col">
-            <p className="font-medium mb-4">Actions</p>
-            <div className="space-x-3">
+          </section>
+
+          <section className="bg-white border border-gray-300 p-4 rounded-lg mt-5 flex flex-col gap-3">
+            <p className="font-medium">Actions</p>
+            <div className="flex gap-3">
               <button
                 type="button"
-                className="bg-green-500 text-white text-sm px-4 py-1 rounded-lg hover:cursor-pointer hover:not-disabled:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-green-500 text-white text-sm px-4 py-1 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-300"
                 onClick={() => setResolveTicketModalOpen(true)}
-                disabled={!canResolve}
+                disabled={!ticket?.canResolve || isClosed}
               >
                 {isClosed || isResolved ? "Resolved" : "Resolve"}
               </button>
-              {!isClosed && canClose && (
+
+              {!isClosed && ticket?.canClose && (
                 <button
                   type="button"
-                  className="bg-red-500 text-white px-4 py-1 rounded-lg text-sm"
+                  className="bg-red-500 text-white text-sm px-4 py-1 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-300"
                   onClick={() => setCloseTicketModalOpen(true)}
                 >
                   {ticket?.status === "closed" ? "Closed" : "Close"}
                 </button>
               )}
             </div>
+
             <Modal
               title="Resolve Ticket"
               isOpen={resolveTicketModalOpen}
               onClose={() => setResolveTicketModalOpen(false)}
             >
               <p>Are you sure you want to resolve this ticket?</p>
-              <div className="flex justify-end mt-4">
+              <div className="flex justify-end mt-4 gap-2">
                 <button
-                  className="bg-gray-300 text-gray-700 px-4 py-1 rounded-md mr-2 text-sm cursor-pointer"
+                  className="bg-gray-300 text-gray-700 px-4 py-1 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
                   onClick={() => setResolveTicketModalOpen(false)}
                 >
                   No
                 </button>
                 <button
-                  className="bg-green-500 text-white px-4 py-1 rounded-md text-sm cursor-pointer"
+                  className="bg-green-500 text-white px-4 py-1 rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-300"
                   onClick={resolveTicket}
+                  disabled={isResolving}
                 >
                   {isResolving ? "Resolving..." : "Yes, resolve it"}
                 </button>
               </div>
             </Modal>
+
             <Modal
               title="Close Ticket"
               isOpen={closeTicketModalOpen}
               onClose={() => setCloseTicketModalOpen(false)}
             >
               <p>Are you sure you want to close this ticket?</p>
-              <div className="flex justify-end mt-4">
+              <div className="flex justify-end mt-4 gap-2">
                 <button
-                  className="bg-gray-300 text-gray-700 px-4 py-1 rounded-md mr-2 text-sm cursor-pointer"
+                  className="bg-gray-300 text-gray-700 px-4 py-1 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
                   onClick={() => setCloseTicketModalOpen(false)}
                 >
                   No
                 </button>
                 <button
-                  className="bg-red-500 text-white px-4 py-1 rounded-md text-sm cursor-pointer"
+                  className="bg-red-500 text-white px-4 py-1 rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-300"
                   onClick={closeTicket}
+                  disabled={isClosing}
                 >
                   {isClosing ? "Closing..." : "Yes, close it"}
                 </button>
               </div>
             </Modal>
-          </div>
-        </div>
+          </section>
+        </aside>
       </div>
     </div>
   );

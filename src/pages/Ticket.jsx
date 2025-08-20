@@ -52,7 +52,7 @@ const Ticket = () => {
   if (loading) return <p>Loading...</p>;
 
   return (
-    <div className="bg-slate-50 min-h-screen p-10">
+    <div className="bg-slate-50 min-h-screen px-20 md:px-40 py-10">
       <div className="flex items-center space-x-4 mb-5">
         <div className="hover:bg-gray-200 p-2 rounded-full flex items-center">
           <NavLink to="/" className="cursor-pointer">
@@ -68,17 +68,17 @@ const Ticket = () => {
           <h1 className="text-2xl font-bold">{ticket.title}</h1>
         </div>
       </div>
-      <div className="flex space-x-4">
-        <div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="col-span-2">
           <div className="bg-white border border-gray-300 p-6 rounded-lg">
             <div className="flex items-center space-x-2 mb-5">
               <UserRound size={30} />
               <div>
                 <div className="flex items-center space-x-3">
                   <p className="font-medium">
-                    {ticket.customer.firstName} {ticket.customer.lastName}
+                    {ticket.customer.firstName}
                   </p>
-                  <div className="text-gray-600 px-2 bg-gray-200 rounded-xl text-xs">
+                  <div className="text-gray-600 px-2 bg-gray-200 rounded-xl text-xs whitespace-nowrap">
                     {ticket.customer.role}
                   </div>
                 </div>
@@ -194,7 +194,7 @@ const Ticket = () => {
                 </div>
               </div>
             ) : (
-              currentUser?.role === "agent" && (
+              currentUser?.role === "agent" ? (
                 <button
                   className="border border-gray-500 px-4 py-1 rounded-md text-sm whitespace-nowrap cursor-pointer"
                   onClick={() => assignTicket()}
@@ -202,6 +202,8 @@ const Ticket = () => {
                 >
                   {assigning ? "Assigning..." : "Assign to Me"}
                 </button>
+              ) : (
+                <p className="text-gray-500 text-sm">Unassigned</p>
               )
             )}
           </div>

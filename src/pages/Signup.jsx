@@ -4,6 +4,7 @@ import { useSignupMutation } from "../graphql/mutations/signupUser";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate, Link } from "react-router";
 import { useSnackbar } from "notistack";
+import { loginPath } from "../path";
 
 const Signup = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -148,7 +149,7 @@ const Signup = () => {
 
           <p className="text-sm text-gray-600 mt-4 text-center">
             Already have an account?{" "}
-            <Link to="/login" className="text-violet-600 hover:underline">
+            <Link to={loginPath()} className="text-violet-600 hover:underline">
               Login
             </Link>
           </p>

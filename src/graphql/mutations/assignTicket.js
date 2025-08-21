@@ -22,9 +22,6 @@ export const useAssignTicket = (ticketId, callbackAction) => {
     onCompleted: (data) => {
       callbackAction(data.assignTicket);
     },
-    onError: (error) => {
-      // Handle error
-    },
     variables: {
       ticketId,
     },

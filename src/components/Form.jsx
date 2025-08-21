@@ -22,7 +22,7 @@ const ACCEPTED_TYPES = ["image/jpeg", "image/png", "application/pdf"];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_FILES = 3;
 
-const Form = ({ createTicket, loading, error }) => {
+const Form = ({ createTicket, loading }) => {
   const { enqueueSnackbar } = useSnackbar();
   const formId = useId();
   const fileInputRef = useRef(null);

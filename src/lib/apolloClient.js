@@ -4,7 +4,7 @@ import Cookies from "js-cookie";
 import { createUploadLink } from "apollo-upload-client";
 
 const httpLink = createUploadLink({
-  uri: "http://localhost:3000/graphql",
+  uri: `${import.meta.env.VITE_BASE_URL}/graphql`
 });
 
 const authLink = setContext((_, { headers }) => {

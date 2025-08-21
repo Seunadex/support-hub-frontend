@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { AuthContext } from "@/contexts/AuthContext";
 import { NavLink, useNavigate } from "react-router";
+import { loginPath, signUpPath } from "../path";
 
 const Navbar = () => {
   let navigate = useNavigate();
@@ -9,7 +10,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate(loginPath);
   };
 
   return (
@@ -27,10 +28,10 @@ const Navbar = () => {
           </button>
         ) : (
           <div className="flex gap-4">
-            <NavLink to="/login" className="text-violet-800 border border-violet-800 rounded-md px-4 py-1 hover:cursor-pointer">
+            <NavLink to={loginPath()} className="text-violet-800 border border-violet-800 rounded-md px-4 py-1 hover:cursor-pointer">
               Login
             </NavLink>
-            <NavLink to="/signup" className="text-violet-800 border border-violet-800 rounded-md px-4 py-1 hover:cursor-pointer">
+            <NavLink to={signUpPath()} className="text-violet-800 border border-violet-800 rounded-md px-4 py-1 hover:cursor-pointer">
               Register
             </NavLink>
           </div>

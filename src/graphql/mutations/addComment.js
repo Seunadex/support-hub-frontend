@@ -2,7 +2,7 @@ import { gql, useMutation } from "@apollo/client";
 import { GET_TICKET } from "@/graphql/queries/getTicket";
 
 const ADD_COMMENT = gql`
-  mutation AddComment($ticketId: String!, $body: String!) {
+  mutation AddComment($ticketId: ID!, $body: String!) {
     addComment(input: { ticketId: $ticketId, body: $body }) {
       ticket {
         id

@@ -57,7 +57,7 @@ const SafeDate = ({ iso, formatStr = "MMM d, yyyy, hh:mm:ss a" }) => {
 const Ticket = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { id } = useParams();
-  const { loading, ticket } = useGetTicket(id);
+  const { loading, ticket } = useGetTicket(Number(id));
 
   const [comment, setComment] = useState("");
   const [closeTicketModalOpen, setCloseTicketModalOpen] = useState(false);
@@ -68,11 +68,11 @@ const Ticket = () => {
   const {
     assignTicket,
     loading: assigning,
-  } = useAssignTicket(id, updatedTicket => {
+  } = useAssignTicket(Number(id), updatedTicket => {
     if (updatedTicket) enqueueSnackbar("Ticket assigned", { variant: "success" });
   });
 
-  const { addComment, loading: commentLoading } = useAddComment(id, comment, data => {
+  const { addComment, loading: commentLoading } = useAddComment(Number(id), comment, data => {
     if (data?.addComment?.ticket) {
       enqueueSnackbar("Comment added", { variant: "success" });
       setComment("");
@@ -81,7 +81,7 @@ const Ticket = () => {
     (data?.addComment?.errors || []).forEach(err => enqueueSnackbar(err, { variant: "error" }));
   });
 
-  const { closeTicket, isClosing } = useCloseTicket(id, result => {
+  const { closeTicket, isClosing } = useCloseTicket(Number(id), result => {
     if (result?.closeTicket?.success) {
       setCloseTicketModalOpen(false);
       enqueueSnackbar("Ticket closed", { variant: "success" });
@@ -90,7 +90,7 @@ const Ticket = () => {
     (result?.closeTicket?.errors || []).forEach(err => enqueueSnackbar(err, { variant: "error" }));
   });
 
-  const { resolveTicket, isResolving } = useResolveTicket(id, result => {
+  const { resolveTicket, isResolving } = useResolveTicket(Number(id), result => {
     if (result?.resolveTicket?.success) {
       setResolveTicketModalOpen(false);
       enqueueSnackbar("Ticket resolved", { variant: "success" });
@@ -238,7 +238,7 @@ const Ticket = () => {
                 <button
                   type="submit"
                   disabled={!comment.trim() || commentLoading}
-                  className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg flex self-end text-sm items-center gap-1 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg flex self-end text-sm items-center gap-1 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
                   <Send size={15} />
                   <span>{commentLoading ? "Sending..." : "Send Response"}</span>
@@ -291,7 +291,7 @@ const Ticket = () => {
               </div>
             ) : currentUser?.role === "agent" ? (
               <button
-                className="border border-gray-500 px-4 py-1 rounded-md text-sm whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-violet-400"
+                className="border border-gray-500 px-4 py-1 rounded-md text-sm whitespace-nowrap cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-violet-400"
                 onClick={() => assignTicket()}
                 disabled={assigning}
               >
@@ -307,7 +307,7 @@ const Ticket = () => {
             <div className="flex gap-3">
               <button
                 type="button"
-                className="bg-green-500 text-white text-sm px-4 py-1 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-300"
+                className="bg-green-500 text-white text-sm px-4 py-1 rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-300"
                 onClick={() => setResolveTicketModalOpen(true)}
                 disabled={!ticket?.canResolve || isClosed}
               >
@@ -317,7 +317,7 @@ const Ticket = () => {
               {!isClosed && ticket?.canClose && (
                 <button
                   type="button"
-                  className="bg-red-500 text-white text-sm px-4 py-1 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-300"
+                  className="bg-red-500 text-white text-sm px-4 py-1 rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-300"
                   onClick={() => setCloseTicketModalOpen(true)}
                 >
                   {ticket?.status === "closed" ? "Closed" : "Close"}
@@ -333,13 +333,13 @@ const Ticket = () => {
               <p>Are you sure you want to resolve this ticket?</p>
               <div className="flex justify-end mt-4 gap-2">
                 <button
-                  className="bg-gray-300 text-gray-700 px-4 py-1 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  className="bg-gray-300 text-gray-700 px-4 py-1 rounded-md text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-400"
                   onClick={() => setResolveTicketModalOpen(false)}
                 >
                   No
                 </button>
                 <button
-                  className="bg-green-500 text-white px-4 py-1 rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-300"
+                  className="bg-green-500 text-white px-4 py-1 rounded-md text-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-300"
                   onClick={resolveTicket}
                   disabled={isResolving}
                 >
@@ -356,13 +356,13 @@ const Ticket = () => {
               <p>Are you sure you want to close this ticket?</p>
               <div className="flex justify-end mt-4 gap-2">
                 <button
-                  className="bg-gray-300 text-gray-700 px-4 py-1 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  className="bg-gray-300 text-gray-700 px-4 py-1 rounded-md text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-400"
                   onClick={() => setCloseTicketModalOpen(false)}
                 >
                   No
                 </button>
                 <button
-                  className="bg-red-500 text-white px-4 py-1 rounded-md text-sm disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-300"
+                  className="bg-red-500 text-white px-4 py-1 rounded-md text-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-300"
                   onClick={closeTicket}
                   disabled={isClosing}
                 >

@@ -130,7 +130,7 @@ const Signup = () => {
                   type="button"
                   onClick={() => setShowPassword(s => !s)}
                   aria-pressed={showPassword}
-                  className="absolute inset-y-0 right-2 flex items-center px-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  className="absolute inset-y-0 right-2 flex items-center px-2 text-gray-500 cursor-pointer hover:text-gray-700 focus:outline-none"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -140,7 +140,7 @@ const Signup = () => {
             <button
               type="submit"
               disabled={loading || isDisabled}
-              className="bg-violet-600 text-white rounded-md px-4 py-2 hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed self-end focus:outline-none focus:ring-2 focus:ring-violet-400"
+              className="bg-violet-600 text-white rounded-md px-4 py-2 cursor-pointer hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed self-end focus:outline-none focus:ring-2 focus:ring-violet-400"
             >
               {loading ? "Signing up..." : "Sign Up"}
             </button>

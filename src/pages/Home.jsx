@@ -135,7 +135,7 @@ const Home = () => {
         {isCustomer ? (
           <button
             type="button"
-            className="bg-blue-600 text-white px-3 py-1.5 rounded flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="bg-blue-600 text-white px-3 py-1.5 rounded flex items-center gap-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400"
             onClick={openModal}
           >
             <Plus size={20} /> <span>New Ticket</span>

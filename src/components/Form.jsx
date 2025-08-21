@@ -222,7 +222,7 @@ const Form = ({ createTicket, loading, error }) => {
             />
             <button
               type="button"
-              className="mt-2 text-sm border border-gray-600 px-4 py-1.5 rounded"
+              className="mt-2 text-sm border border-gray-600 px-4 py-1.5 rounded cursor-pointer"
               onClick={() => fileInputRef.current?.click()}
               disabled={remainingSlots <= 0}
             >
@@ -249,7 +249,7 @@ const Form = ({ createTicket, loading, error }) => {
                     <span className="text-xs tabular-nums">{formatFileSize(file.size)}</span>
                     <button
                       type="button"
-                      className="text-red-600 p-1"
+                      className="text-red-600 p-1 cursor-pointer"
                       aria-label={`Remove ${file.name}`}
                       onClick={() => removeFileAt(index)}
                     >
@@ -258,7 +258,7 @@ const Form = ({ createTicket, loading, error }) => {
                   </div>
                 ))}
                 <div className="flex justify-end">
-                  <button type="button" className="text-xs underline" onClick={clearAll}>Remove all</button>
+                  <button type="button" className="text-xs underline cursor-pointer" onClick={clearAll}>Remove all</button>
                 </div>
               </div>
             ) : (

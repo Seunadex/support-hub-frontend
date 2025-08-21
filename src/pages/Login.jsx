@@ -96,7 +96,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading || isDisabled}
-              className="bg-violet-600 text-white rounded-md px-4 py-2 hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed self-end focus:outline-none focus:ring-2 focus:ring-violet-400"
+              className="bg-violet-600 text-white rounded-md px-4 cursor-pointer py-2 hover:bg-violet-700 disabled:opacity-60 disabled:cursor-not-allowed self-end focus:outline-none focus:ring-2 focus:ring-violet-400"
             >
               {loading ? "Logging in..." : "Login"}
             </button>

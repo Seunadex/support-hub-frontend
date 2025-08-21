@@ -3,7 +3,7 @@ import { GET_TICKET } from "@/graphql/queries/getTicket";
 import { GET_TICKET_STAT_COUNT } from "../queries/getTicketStatCount";
 
 const CLOSE_TICKET = gql`
-  mutation CloseTicket($ticketId: String!) {
+  mutation CloseTicket($ticketId: ID!) {
     closeTicket(input: { ticketId: $ticketId }) {
       success
       errors

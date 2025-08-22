@@ -1,4 +1,10 @@
-import { createContext, useState, useEffect, useMemo, useCallback } from "react";
+import {
+  createContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import Cookies from "js-cookie";
 import { useQuery } from "@apollo/client";
 import { GET_CURRENT_USER } from "../graphql/queries/getCurrentUser";
@@ -6,8 +12,9 @@ import { GET_CURRENT_USER } from "../graphql/queries/getCurrentUser";
 // Cookie helpers
 const COOKIE_NAME = "auth_token";
 const readToken = () => Cookies.get(COOKIE_NAME) || null;
-const setToken = token => {
-  const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+const setToken = (token) => {
+  const isHttps =
+    typeof window !== "undefined" && window.location.protocol === "https:";
   Cookies.set(COOKIE_NAME, token, {
     expires: 1,
     secure: isHttps,
@@ -19,14 +26,16 @@ const clearToken = () => Cookies.remove(COOKIE_NAME);
 // Cross-tab sync key
 const AUTH_EVENT_KEY = "auth_event";
 
-// Detect true auth failures, not transient network errors
-const isAuthError = err => {
+// Detect true auth failures
+const isAuthError = (err) => {
   if (!err) return false;
   const http = err.networkError;
   const status = http?.statusCode || http?.response?.status;
   if (status === 401 || status === 403) return true;
   return (err.graphQLErrors || []).some(
-    e => e?.extensions?.code === "UNAUTHENTICATED" || e?.extensions?.code === "FORBIDDEN"
+    (e) =>
+      e?.extensions?.code === "UNAUTHENTICATED" ||
+      e?.extensions?.code === "FORBIDDEN"
   );
 };
 
@@ -68,7 +77,7 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    // Only logout on true auth failures
+    // Only logout when there is an auth error
     if (error && isAuthError(error)) {
       clearToken();
       setHasToken(false);
@@ -86,8 +95,8 @@ export const AuthProvider = ({ children }) => {
       if (!navigator.onLine) return;
       try {
         await refetch?.();
-      } catch {
-        // ignore transient errors
+      } catch (err) {
+        console.error(err);
       }
     };
 
@@ -104,9 +113,8 @@ export const AuthProvider = ({ children }) => {
     };
   }, [isAuthenticated, refetch]);
 
-  // Cross-tab login/logout sync
   useEffect(() => {
-    const onStorage = e => {
+    const onStorage = (e) => {
       if (e.key !== AUTH_EVENT_KEY) return;
       setHasToken(!!readToken());
     };

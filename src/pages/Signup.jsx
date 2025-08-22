@@ -120,7 +120,7 @@ const Signup = () => {
                   required
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder="*******"
                   value={signupDetails.password}
                   onChange={e => setSignupDetails({ ...signupDetails, password: e.target.value })}
                   minLength={6}

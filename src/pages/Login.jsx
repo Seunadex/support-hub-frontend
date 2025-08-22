@@ -76,7 +76,7 @@ const Login = () => {
                   required
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder="*********"
                   value={loginDetails.password}
                   onChange={e => setLoginDetails({ ...loginDetails, password: e.target.value })}
                   minLength={6}

@@ -22,10 +22,24 @@ Talks to the Rails/GraphQL backend with jwt auth, Pundit‑backed capability fla
   cd support-hub-frontend
 
   yarn install
+```
+
+**Set up environment variables**
+
+Copy `.env.example` to `.env` and update values as needed:
+
+```bash
+  cp .env.example .env
+```
+
+**Start the development server**
+
+```bash
   yarn dev
 ```
 
+**Run tests**
+
 ```bash
-  # Run test
   yarn test
 ```

@@ -6,7 +6,6 @@ const statusColors = {
   waiting_on_customer: "bg-yellow-400 text-gray-700",
   resolved: "bg-purple-500 text-white",
   closed: "bg-gray-400 text-white",
-  reopened: "bg-red-500 text-white",
 };
 
 const priorityColors = {

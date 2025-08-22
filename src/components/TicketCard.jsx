@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from "react";
+import { memo, useMemo } from "react";
 import { NavLink } from "react-router";
 import PropTypes from "prop-types";
 import { formatDistanceToNow, parseISO, isValid } from "date-fns";

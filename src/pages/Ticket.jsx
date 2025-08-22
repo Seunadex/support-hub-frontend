@@ -50,7 +50,8 @@ const CardSkeleton = () => (
 
 const SafeDate = ({ iso, formatStr = "MMM d, yyyy, hh:mm:ss a" }) => {
   const d = parseISO(iso || "");
-  if (!iso || !isValid(d)) return <span className="text-gray-500">Unknown</span>;
+  if (!iso || !isValid(d))
+    return <span className="text-gray-500">Unknown</span>;
   return <span title={d.toISOString()}>{format(d, formatStr)}</span>;
 };
 
@@ -65,44 +66,61 @@ const Ticket = () => {
 
   const { user: currentUser } = useContext(AuthContext);
 
-  const {
-    assignTicket,
-    loading: assigning,
-  } = useAssignTicket(Number(id), updatedTicket => {
-    if (updatedTicket) enqueueSnackbar("Ticket assigned", { variant: "success" });
-  });
-
-  const { addComment, loading: commentLoading } = useAddComment(Number(id), comment, data => {
-    if (data?.addComment?.ticket) {
-      enqueueSnackbar("Comment added", { variant: "success" });
-      setComment("");
-      return;
+  const { assignTicket, loading: assigning } = useAssignTicket(
+    Number(id),
+    (updatedTicket) => {
+      if (updatedTicket)
+        enqueueSnackbar("Ticket assigned", { variant: "success" });
     }
-    (data?.addComment?.errors || []).forEach(err => enqueueSnackbar(err, { variant: "error" }));
-  });
+  );
 
-  const { closeTicket, isClosing } = useCloseTicket(Number(id), result => {
+  const { addComment, loading: commentLoading } = useAddComment(
+    Number(id),
+    comment,
+    (data) => {
+      if (data?.addComment?.ticket) {
+        enqueueSnackbar("Comment added", { variant: "success" });
+        setComment("");
+        return;
+      }
+      (data?.addComment?.errors || []).forEach((err) =>
+        enqueueSnackbar(err, { variant: "error" })
+      );
+    }
+  );
+
+  const { closeTicket, isClosing } = useCloseTicket(Number(id), (result) => {
     if (result?.closeTicket?.success) {
       setCloseTicketModalOpen(false);
       enqueueSnackbar("Ticket closed", { variant: "success" });
       return;
     }
-    (result?.closeTicket?.errors || []).forEach(err => enqueueSnackbar(err, { variant: "error" }));
+    (result?.closeTicket?.errors || []).forEach((err) =>
+      enqueueSnackbar(err, { variant: "error" })
+    );
   });
 
-  const { resolveTicket, isResolving } = useResolveTicket(Number(id), result => {
-    if (result?.resolveTicket?.success) {
-      setResolveTicketModalOpen(false);
-      enqueueSnackbar("Ticket resolved", { variant: "success" });
-      return;
+  const { resolveTicket, isResolving } = useResolveTicket(
+    Number(id),
+    (result) => {
+      if (result?.resolveTicket?.success) {
+        setResolveTicketModalOpen(false);
+        enqueueSnackbar("Ticket resolved", { variant: "success" });
+        return;
+      }
+      (result?.resolveTicket?.errors || []).forEach((err) =>
+        enqueueSnackbar(err, { variant: "error" })
+      );
     }
-    (result?.resolveTicket?.errors || []).forEach(err => enqueueSnackbar(err, { variant: "error" }));
-  });
+  );
 
   const allowComment = useMemo(() => {
-    const isCompleted = ticket?.status === "resolved" || ticket?.status === "closed";
+    const isCompleted =
+      ticket?.status === "resolved" || ticket?.status === "closed";
     return (
-      (!isCompleted && ticket?.agentHasReplied) || ticket?.agentCanComment || ticket?.customerCanComment
+      (!isCompleted && ticket?.agentHasReplied) ||
+      ticket?.agentCanComment ||
+      ticket?.customerCanComment
     );
   }, [ticket]);
 
@@ -110,7 +128,7 @@ const Ticket = () => {
   const isClosed = ticket?.status === "closed";
 
   const handleSubmit = useCallback(
-    e => {
+    (e) => {
       e.preventDefault();
       if (!comment.trim() || commentLoading) return;
       try {
@@ -124,7 +142,7 @@ const Ticket = () => {
 
   if (loading) {
     return (
-      <div className="bg-slate-50 min-h-screen px-6 md:px-10 py-10">
+      <div className="bg-slate-50 min-h-screen px-6 md:px-10 py-10" data-testid="loading">
         <div className="flex items-center gap-3 mb-5">
           <div className="h-8 w-8 bg-gray-200 rounded-full animate-pulse" />
           <div className="h-6 w-40 bg-gray-200 rounded animate-pulse" />
@@ -176,20 +194,34 @@ const Ticket = () => {
               <UserRound size={30} />
               <div>
                 <div className="flex items-center gap-3">
-                  <p className="font-medium" title={ticket.customer.fullName || ticket.customer.firstName}>
+                  <p
+                    className="font-medium"
+                    title={
+                      ticket.customer.fullName || ticket.customer.firstName
+                    }
+                  >
                     {ticket.customer.firstName}
                   </p>
                   <div className="text-gray-600 px-2 bg-gray-200 rounded-xl text-xs whitespace-nowrap">
                     {ticket.customer.role}
                   </div>
                 </div>
-                <p className="text-gray-500 text-sm" title={isValid(createdAtDate) ? createdAtDate.toISOString() : undefined}>
+                <p
+                  className="text-gray-500 text-sm"
+                  title={
+                    isValid(createdAtDate)
+                      ? createdAtDate.toISOString()
+                      : undefined
+                  }
+                >
                   Created {createdAgo}
                 </p>
               </div>
             </div>
 
-            <p className="text-slate-700 whitespace-pre-wrap break-words">{ticket.description}</p>
+            <p className="text-slate-700 whitespace-pre-wrap break-words">
+              {ticket.description}
+            </p>
 
             <hr className="my-5 text-gray-200" />
 
@@ -200,8 +232,11 @@ const Ticket = () => {
 
             {ticket.attachments.length > 0 ? (
               <ul className="flex flex-col gap-1">
-                {ticket.attachments.map(att => (
-                  <li key={att.id} className="flex items-center gap-1 text-blue-700">
+                {ticket.attachments.map((att) => (
+                  <li
+                    key={att.id}
+                    className="flex items-center gap-1 text-blue-700"
+                  >
                     <Paperclip size={12} />
                     <a
                       href={att.url}
@@ -220,9 +255,8 @@ const Ticket = () => {
             )}
           </section>
 
-          {Array.isArray(ticket.comments) && ticket.comments.map(c => (
-            <CommentCard key={c.id} comment={c} />
-          ))}
+          {Array.isArray(ticket.comments) &&
+            ticket.comments.map((c) => <CommentCard key={c.id} comment={c} />)}
 
           {allowComment && (
             <section className="bg-white border border-gray-300 p-6 rounded-lg mt-4">
@@ -232,7 +266,7 @@ const Ticket = () => {
                   className="border border-gray-300 p-2 rounded-lg w-full bg-slate-50 text-sm"
                   rows={4}
                   placeholder="Type your response here..."
-                  onChange={e => setComment(e.target.value)}
+                  onChange={(e) => setComment(e.target.value)}
                   value={comment}
                 />
                 <button
@@ -261,7 +295,9 @@ const Ticket = () => {
             </div>
             <div className="mb-3">
               <p className="text-gray-500 text-sm">Category</p>
-              <p className="text-gray-700 text-sm">{humanize(ticket.category)}</p>
+              <p className="text-gray-700 text-sm">
+                {humanize(ticket.category)}
+              </p>
             </div>
             <div className="mb-3">
               <p className="text-gray-500 text-sm">Created</p>
@@ -285,8 +321,12 @@ const Ticket = () => {
               <div className="flex items-center gap-2">
                 <HatGlasses size={35} />
                 <div>
-                  <p className="text-gray-700 font-medium">{ticket.assignedTo.fullName}</p>
-                  <p className="text-gray-500 text-sm">{ticket.assignedTo.email}</p>
+                  <p className="text-gray-700 font-medium">
+                    {ticket.assignedTo.fullName}
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    {ticket.assignedTo.email}
+                  </p>
                 </div>
               </div>
             ) : currentUser?.role === "agent" ? (

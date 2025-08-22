@@ -8,6 +8,19 @@ export default defineConfig({
     react(),
     tailwindcss()
   ],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test/setupTests.js',
+    css: true,
+    coverage: {
+      reporter: ['text', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+      lines: 90,
+      functions: 90,
+      branches: 80
+    }
+  },
   resolve: {
     alias: {
       "@": "/src",

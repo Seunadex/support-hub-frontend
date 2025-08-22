@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 
 import { format, subMonths } from "date-fns";
+import Tooltip from "../components/Tooltip";
 
 const StatCard = ({ title, value, icon, bgClass }) => (
   <div className={`${bgClass} p-4 rounded shadow`}>
@@ -141,18 +142,20 @@ const Home = () => {
             <Plus size={20} /> <span>New Ticket</span>
           </button>
         ) : (
-          <button
-            type="button"
-            className="bg-blue-600 text-white px-3 py-1.5 rounded-full cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-400"
-            onClick={handleExport}
-            disabled={isExporting}
-            aria-busy={isExporting}
-            aria-label="Export closed tickets for the last month"
-          >
-            <Download size={18} />
-            <span>{isExporting ? "Exporting" : "Export"}</span>
-            {isExporting && <LoaderCircle className="animate-spin" size={16} />}
-          </button>
+          <Tooltip text="Export closed tickets for the last month">
+            <button
+              type="button"
+              className="bg-blue-600 text-white px-3 py-1.5 rounded-full cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-400"
+              onClick={handleExport}
+              disabled={isExporting}
+              aria-busy={isExporting}
+              aria-label="Export closed tickets for the last month"
+              >
+              <Download size={18} />
+              <span>{isExporting ? "Exporting" : "Export"}</span>
+              {isExporting && <LoaderCircle className="animate-spin" size={16} />}
+            </button>
+          </Tooltip>
         )}
         <Modal isOpen={isModalOpen} onClose={closeModal} title="New Support Ticket">
           <Form createTicket={createTicket} loading={loading} error={error} />
